@@ -109,6 +109,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical" >
                     <LinearLayout
+                        android:visibility="gone"
                         android:id="@+id/CardEditorCardsButton"
                         style="?android:attr/buttonStyleSmall"
                         android:layout_width="fill_parent"

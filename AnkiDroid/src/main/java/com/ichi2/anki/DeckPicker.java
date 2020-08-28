@@ -463,15 +463,16 @@ public class DeckPicker extends NavigationDrawerActivity implements
         mDeckListAdapter.enablePartialTransparencyForBackground(hasDeckPickerBackground);
         mRecyclerView.setAdapter(mDeckListAdapter);
 
-        mPullToSyncWrapper = findViewById(R.id.pull_to_sync_wrapper);
-        mPullToSyncWrapper.setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE);
-        mPullToSyncWrapper.setOnRefreshListener(() -> {
-            Timber.i("Pull to Sync: Syncing");
-            mPullToSyncWrapper.setRefreshing(false);
-            sync();
-        });
-        mPullToSyncWrapper.getViewTreeObserver().addOnScrollChangedListener(() ->
-                mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
+//        mPullToSyncWrapper = findViewById(R.id.pull_to_sync_wrapper);
+//        mPullToSyncWrapper.setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE);
+//        mPullToSyncWrapper.setOnRefreshListener(() -> {
+//            Timber.i("Pull to Sync: Syncing");
+//            mPullToSyncWrapper.setRefreshing(false);
+//            sync();
+//        });
+//
+//        mPullToSyncWrapper.getViewTreeObserver().addOnScrollChangedListener(() ->
+//                mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
 
         // Setup the FloatingActionButtons, should work everywhere with min API >= 15
         mActionsMenu = findViewById(R.id.add_content_menu);
@@ -631,7 +632,6 @@ public class DeckPicker extends NavigationDrawerActivity implements
         Timber.d("onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.deck_picker, menu);
         boolean sdCardAvailable = AnkiDroidApp.isSdCardMounted();
-        menu.findItem(R.id.action_sync).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_new_filtered_deck).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_check_database).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_check_media).setEnabled(sdCardAvailable);
@@ -650,40 +650,40 @@ public class DeckPicker extends NavigationDrawerActivity implements
 
 
     private void displaySyncBadge(Menu menu) {
-        MenuItem syncMenu = menu.findItem(R.id.action_sync);
-        SyncStatus syncStatus = SyncStatus.getSyncStatus(this::getCol);
-        switch (syncStatus) {
-            case BADGE_DISABLED:
-            case NO_CHANGES:
-            case INCONCLUSIVE:
-                BadgeDrawableBuilder.removeBadge(syncMenu);
-                syncMenu.setTitle(R.string.sync_menu_title);
-                break;
-            case HAS_CHANGES:
-                // Light orange icon
-                new BadgeDrawableBuilder(getResources())
-                        .withColor(ContextCompat.getColor(this, R.color.badge_warning))
-                        .replaceBadge(syncMenu);
-                syncMenu.setTitle(R.string.sync_menu_title);
-                break;
-            case NO_ACCOUNT:
-            case FULL_SYNC:
-                if (syncStatus == SyncStatus.NO_ACCOUNT) {
-                    syncMenu.setTitle(R.string.sync_menu_title_no_account);
-                } else if (syncStatus == SyncStatus.FULL_SYNC) {
-                    syncMenu.setTitle(R.string.sync_menu_title_full_sync);
-                }
-                // Orange-red icon with exclamation mark
-                new BadgeDrawableBuilder(getResources())
-                        .withText('!')
-                        .withColor(ContextCompat.getColor(this, R.color.badge_error))
-                        .replaceBadge(syncMenu);
-                break;
-            default:
-                Timber.w("Unhandled sync status: %s", syncStatus);
-                syncMenu.setTitle(R.string.sync_title);
-                break;
-        }
+//        MenuItem syncMenu = menu.findItem(R.id.action_sync);
+//        SyncStatus syncStatus = SyncStatus.getSyncStatus(this::getCol);
+//        switch (syncStatus) {
+//            case BADGE_DISABLED:
+//            case NO_CHANGES:
+//            case INCONCLUSIVE:
+//                BadgeDrawableBuilder.removeBadge(syncMenu);
+//                syncMenu.setTitle(R.string.sync_menu_title);
+//                break;
+//            case HAS_CHANGES:
+//                // Light orange icon
+//                new BadgeDrawableBuilder(getResources())
+//                        .withColor(ContextCompat.getColor(this, R.color.badge_warning))
+//                        .replaceBadge(syncMenu);
+//                syncMenu.setTitle(R.string.sync_menu_title);
+//                break;
+//            case NO_ACCOUNT:
+//            case FULL_SYNC:
+//                if (syncStatus == SyncStatus.NO_ACCOUNT) {
+//                    syncMenu.setTitle(R.string.sync_menu_title_no_account);
+//                } else if (syncStatus == SyncStatus.FULL_SYNC) {
+//                    syncMenu.setTitle(R.string.sync_menu_title_full_sync);
+//                }
+//                // Orange-red icon with exclamation mark
+//                new BadgeDrawableBuilder(getResources())
+//                        .withText('!')
+//                        .withColor(ContextCompat.getColor(this, R.color.badge_error))
+//                        .replaceBadge(syncMenu);
+//                break;
+//            default:
+//                Timber.w("Unhandled sync status: %s", syncStatus);
+//                syncMenu.setTitle(R.string.sync_title);
+//                break;
+//        }
     }
 
 
@@ -698,11 +698,6 @@ public class DeckPicker extends NavigationDrawerActivity implements
             case R.id.action_undo:
                 Timber.i("DeckPicker:: Undo button pressed");
                 undo();
-                return true;
-
-            case R.id.action_sync:
-                Timber.i("DeckPicker:: Sync button pressed");
-                sync();
                 return true;
 
             case R.id.action_import:
@@ -2170,13 +2165,26 @@ public class DeckPicker extends NavigationDrawerActivity implements
 
         else if(deckDueTreeNode.getNewCount() == 0){
 
+            // Override Custom Study
+            // 1. Get deck id
+            // 2. Get deck name
+            // 3. Get deck parent name
+            // 4. Get all decks name in an array
+            // 5. loop through all decks
+            // 6. get decks with above parent name matches
+            // 7. get matched deck id from name
+            // 8. getCol -> getDecks -> Decks -- Json
+            // 9. Reset json to default
+            // 10. getCol.getDecks.flush()
+            // 11. Move to overview
+
+
             AlertDialog.Builder builder =  new AlertDialog.Builder(this);
-            builder.setTitle("Are Youwe r Sure You Want To Reset");
+            builder.setTitle("Are You Sure You Want To Reset");
             builder.setNegativeButton("Yes", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-
-                    deckDueTreeNode.setmNewCount(getCol().cardCount());
+                    deckDueTreeNode.setmNewCount(20);
                     dialog.dismiss();
                 }
             })

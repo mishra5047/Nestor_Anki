@@ -1566,6 +1566,8 @@ public abstract class AbstractFlashcardViewer extends NavigationDrawerActivity i
         webView.setScrollbarFadingEnabled(true);
         Timber.d("Focusable = %s, Focusable in touch mode = %s", webView.isFocusable(), webView.isFocusableInTouchMode());
 
+        webView.getSettings().setDomStorageEnabled(true);
+
         webView.setWebViewClient(new CardViewerWebClient());
         // Set transparent color to prevent flashing white when night mode enabled
         webView.setBackgroundColor(Color.argb(1, 0, 0, 0));

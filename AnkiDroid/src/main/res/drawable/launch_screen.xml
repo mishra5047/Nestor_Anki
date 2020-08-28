@@ -4,7 +4,7 @@
   <!-- Your product logo - 144dp color version of your app icon -->
   <item>
     <bitmap
-      android:src="@drawable/logo_star_144dp"
+      android:src="@drawable/rsz_logo_nestor"
       android:gravity="center"/>
   </item>
     <item android:top="200dp">

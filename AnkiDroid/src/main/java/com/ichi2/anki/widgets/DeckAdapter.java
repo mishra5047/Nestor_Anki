@@ -181,7 +181,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
             deckLayout.setPadding(smallPadding, 0, rightPadding, 0);
             holder.deckExpander.setVisibility(View.VISIBLE);
             // Create the correct expander for this deck
-            setDeckExpander(holder.deckExpander, holder.indentView, node);
+            setDeckExpander(holder.deckExpander, holder.deckLayout, holder.indentView, node);
         } else {
             holder.deckExpander.setVisibility(View.GONE);
             int normalPadding = (int) deckLayout.getResources().getDimension(R.dimen.deck_picker_left_padding);
@@ -191,8 +191,11 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
         if (node.hasChildren()) {
             holder.deckExpander.setTag(node.getDid());
             holder.deckExpander.setOnClickListener(mDeckExpanderClickListener);
+            holder.deckLayout.setOnClickListener(mDeckExpanderClickListener);
         } else {
+            holder.deckLayout.setOnClickListener(mCountsClickListener);
             holder.deckExpander.setOnClickListener(null);
+            holder.countsLayout.setOnClickListener(mCountsClickListener);
         }
         holder.deckLayout.setBackgroundResource(mRowCurrentDrawable);
         // Set background colour. The current deck has its own color
@@ -225,9 +228,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
         holder.countsLayout.setTag(node.getDid());
 
         // Set click listeners
-        holder.deckLayout.setOnClickListener(mDeckClickListener);
         holder.deckLayout.setOnLongClickListener(mDeckLongClickListener);
-        holder.countsLayout.setOnClickListener(mCountsClickListener);
     }
 
 
@@ -249,17 +250,19 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
     }
 
 
-    private void setDeckExpander(ImageButton expander, ImageButton indent, DeckDueTreeNode node){
+    private void setDeckExpander(ImageButton button, RelativeLayout expander, ImageButton indent, DeckDueTreeNode node){
         boolean collapsed = mCol.getDecks().get(node.getDid()).optBoolean("collapsed", false);
         // Apply the correct expand/collapse drawable
         if (collapsed) {
-            expander.setImageDrawable(mExpandImage);
+            button.setImageDrawable(mExpandImage);
+            button.setContentDescription(expander.getContext().getString(R.string.expand));
             expander.setContentDescription(expander.getContext().getString(R.string.expand));
         } else if (node.hasChildren()) {
-            expander.setImageDrawable(mCollapseImage);
+            button.setImageDrawable(mCollapseImage);
+            button.setContentDescription(expander.getContext().getString(R.string.collapse));
             expander.setContentDescription(expander.getContext().getString(R.string.collapse));
         } else {
-            expander.setImageDrawable(mNoExpander);
+            button.setImageDrawable(mNoExpander);
         }
         // Add some indenting for each nested level
         int width = (int) indent.getResources().getDimension(R.dimen.keyline_1) * node.getDepth();

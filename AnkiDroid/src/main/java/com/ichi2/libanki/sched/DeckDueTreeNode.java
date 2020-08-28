@@ -202,4 +202,8 @@ public class DeckDueTreeNode implements Comparable {
                 mChildren.equals(tree.mChildren))
                 ;
     }
+
+    public void setmNewCount(int mNewCount) {
+        this.mNewCount = mNewCount;
+    }
 }

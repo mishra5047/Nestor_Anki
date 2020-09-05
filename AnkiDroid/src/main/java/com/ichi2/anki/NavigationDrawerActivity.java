@@ -15,11 +15,13 @@
  ****************************************************************************************/
 package com.ichi2.anki;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.app.TaskStackBuilder;
@@ -29,14 +31,23 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 
 import com.ichi2.anim.ActivityTransitionAnimation;
+import com.ichi2.anki.profile.ProfileAdapter;
 import com.ichi2.compat.CompatHelper;
 import com.ichi2.themes.Themes;
 
+import java.io.File;
+import java.util.ArrayList;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import timber.log.Timber;
 
 
@@ -317,6 +328,33 @@ public abstract class NavigationDrawerActivity extends AnkiActivity implements N
                     Timber.i("Navigating to feedback");
                     openUrl(Uri.parse(AnkiDroidApp.getFeedbackUrl()));
                     break;
+                case R.id.nav_profile:
+                    // profile dialog box
+                    Dialog dialog = new Dialog(NavigationDrawerActivity.this);
+                    dialog.setCancelable(true);
+                    dialog.setContentView(R.layout.dailog_profile_rec);
+
+                    Button btnClose = dialog.findViewById(R.id.closeBtn);
+                    btnClose.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(getApplicationContext(), Preferences.class);
+                            v.getContext().startActivity(intent);
+                        dialog.dismiss();
+                        }
+                    });
+                    String path = Environment.getExternalStorageDirectory().toString() + "/AnkiDroid";
+                    ArrayList<String> files = getListFiles(new File(path));
+
+                    String[] arrFiles = new String[files.size()];
+                    arrFiles = files.toArray(arrFiles);
+
+                    RecyclerView recProfile = dialog.findViewById(R.id.profile_rec);
+                    ProfileAdapter adapter = new ProfileAdapter(getApplicationContext(), arrFiles);
+                    recProfile.setAdapter(adapter);
+                    recProfile.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+
+                    dialog.show();
                 default:
                     break;
             }
@@ -324,6 +362,26 @@ public abstract class NavigationDrawerActivity extends AnkiActivity implements N
 
         mDrawerLayout.closeDrawers();
         return true;
+    }
+
+        private ArrayList getListFiles(File parentDir) {
+
+            ArrayList<File> inFiles = new ArrayList<File>();
+            String[] files = parentDir.list();
+
+            ArrayList dir = new ArrayList();
+
+            for (int i = 0; i < files.length; i++) {
+                File file = new File(parentDir.getPath() + "/" + files[i]);
+                if (file.isDirectory()) {
+                    if (files[i].equalsIgnoreCase("collection.media")){
+
+                    }else{
+                        dir.add(files[i]);
+                    }
+                    }
+            }
+            return dir;
     }
 
     protected void openCardBrowser() {

@@ -56,6 +56,7 @@ import com.ichi2.anki.contextmenu.CardBrowserContextMenu;
 import com.ichi2.anki.debug.DatabaseLock;
 import com.ichi2.anki.exception.ConfirmModSchemaException;
 import com.ichi2.anki.exception.StorageAccessException;
+import com.ichi2.anki.profile.ProfileAdapter;
 import com.ichi2.anki.services.BootService;
 import com.ichi2.anki.services.NotificationService;
 import com.ichi2.anki.web.CustomSyncServer;
@@ -95,10 +96,6 @@ import androidx.annotation.StringRes;
 import androidx.annotation.VisibleForTesting;
 import timber.log.Timber;
 
-interface PreferenceContext {
-    void addPreferencesFromResource(int preferencesResId);
-    PreferenceScreen getPreferenceScreen();
-}
 
 /**
  * Preferences dialog.
@@ -186,7 +183,7 @@ public class Preferences extends AppCompatPreferenceActivity implements Preferen
         i.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
         return i;
     }
-    private void initSubscreen(String action, PreferenceContext listener) {
+    public void initSubscreen(String action, PreferenceContext listener) {
         PreferenceScreen screen;
         switch (action) {
             case "com.ichi2.anki.prefs.general":
@@ -306,6 +303,7 @@ public class Preferences extends AppCompatPreferenceActivity implements Preferen
                         return false;
                     }
                 });
+
                 // Custom sync server option
                 Preference customSyncServerPreference = screen.findPreference("custom_sync_server_link");
                 customSyncServerPreference.setOnPreferenceClickListener(preference -> {

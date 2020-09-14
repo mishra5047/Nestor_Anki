@@ -2,9 +2,10 @@
     android:layout_width="match_parent"
     android:layout_height="150dp"
     android:orientation="vertical">
+
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/logo_nestor"
+        android:background="@drawable/nestor_image_2"
         android:scaleType="centerCrop" />
 </FrameLayout>

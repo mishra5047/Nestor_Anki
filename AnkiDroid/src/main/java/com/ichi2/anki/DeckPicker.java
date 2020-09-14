@@ -108,6 +108,7 @@ import com.ichi2.async.TaskListener;
 import com.ichi2.async.TaskListenerWithContext;
 import com.ichi2.compat.CompatHelper;
 import com.ichi2.libanki.Collection;
+import com.ichi2.libanki.Consts;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Model;
 import com.ichi2.libanki.Models;
@@ -2138,6 +2139,10 @@ public class DeckPicker extends NavigationDrawerActivity implements
 
     private void handleDeckSelection(long did, boolean dontSkipStudyOptions) {
         // Clear the undo history when selecting a new deck
+
+        Context mContext = AnkiDroidApp.getInstance().getApplicationContext();
+        Collection col = CollectionHelper.getInstance().getCol(mContext);
+
         if (getCol().getDecks().selected() != did) {
             getCol().clearUndo();
         }
@@ -2161,9 +2166,7 @@ public class DeckPicker extends NavigationDrawerActivity implements
                 openReviewer();
             }
             return;
-        }
-
-        else if(deckDueTreeNode.getNewCount() == 0){
+        } else if (deckDueTreeNode.getNewCount() == 0) {
 
             // Override Custom Study
             // 1. Get deck id
@@ -2179,77 +2182,68 @@ public class DeckPicker extends NavigationDrawerActivity implements
             // 11. Move to overview
 
 
-            AlertDialog.Builder builder =  new AlertDialog.Builder(this);
-            builder.setTitle("Are You Sure You Want To Reset");
-            builder.setNegativeButton("Yes", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    deckDueTreeNode.setmNewCount(20);
-                    dialog.dismiss();
+            if (getCol().getSched().hasCardsTodayAfterStudyAheadLimit()) {
+                // If there are cards due that can't be studied yet (due to the learn ahead limit) then go to study options
+                openStudyOptions(false);
+            } else if (getCol().getSched().newDue() || getCol().getSched().revDue()) {
+                // If there are no cards to review because of the daily study limit then give "Study more" option
+                UIUtils.showSnackbar(this, R.string.studyoptions_limit_reached, false, R.string.study_more, v -> {
+                    CustomStudyDialog d = CustomStudyDialog.newInstance(
+                            CustomStudyDialog.CONTEXT_MENU_LIMITS,
+                            getCol().getDecks().selected(), true);
+                    showDialogFragment(d);
+                }, findViewById(R.id.root_layout), mSnackbarShowHideCallback);
+                // Check if we need to update the fragment or update the deck list. The same checks
+                // are required for all snackbars below.
+                if (mFragmented) {
+                    // Tablets must always show the study options that corresponds to the current deck,
+                    // regardless of whether the deck is currently reviewable or not.
+                    openStudyOptions(false);
+                } else {
+                    // On phones, we update the deck list to ensure the currently selected deck is
+                    // highlighted correctly.
+                    updateDeckList();
                 }
-            })
-            .setPositiveButton("No", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-                    dialog.dismiss();
+            } else if (getCol().getDecks().isDyn(did)) {
+                // Go to the study options screen if filtered deck with no cards to study
+                openStudyOptions(false);
+            } else if (!deckDueTreeNode.hasChildren() && getCol().cardCount(new Long[] {did}) == 0) {
+                // If the deck is empty and has no children then show a message saying it's empty
+                final Uri helpUrl = Uri.parse(getResources().getString(R.string.link_manual_getting_started));
+                mayOpenUrl(helpUrl);
+                UIUtils.showSnackbar(this, R.string.empty_deck, false, R.string.help,
+                        v -> openHelpUrl(helpUrl), findViewById(R.id.root_layout), mSnackbarShowHideCallback);
+                if (mFragmented) {
+                    openStudyOptions(false);
+                } else {
+                    updateDeckList();
                 }
-            });
+            } else {
+                List<Long> cids = col.getDb().queryLongList("select id from cards where did = " + did);
+                final long[] carr = new long[cids.size()];
+                int dumb = 0;
+                for (final Long value : cids) {
+                    carr[dumb++] = value;
+                }
 
-            builder.create().show();
+                ConfirmationDialog dialog = new ConfirmationDialog();
+                String title = getString(R.string.reset_card_dialog_title);
+                String message = getString(R.string.reset_card_dialog_message);
+                dialog.setArgs(title, message);
+                Runnable confirm = () -> {
+                    col.getDb().execute("update cards set type=0,queue=0,ivl=0,due=0,odue=0,factor=" + Consts.STARTING_FACTOR +
+                            " where id in " + Utils.ids2str(carr));
+                    openStudyOptions(false);
+                };
+                dialog.setConfirm(confirm);
+                showDialogFragment(dialog);
+                if (mFragmented) {
+                    openStudyOptions(false);
+                } else {
+                    updateDeckList();
+                }
+            }
         }
-//        if (getCol().getSched().hasCardsTodayAfterStudyAheadLimit()) {
-//            // If there are cards due that can't be studied yet (due to the learn ahead limit) then go to study options
-//            openStudyOptions(false);
-//        }
-//
-//        else if (getCol().getSched().newDue() || getCol().getSched().revDue()) {
-//            // If there are no cards to review because of the daily study limit then give "Study more" option
-//            UIUtils.showSnackbar(this, R.string.studyoptions_limit_reached, false, R.string.study_more, v -> {
-//                CustomStudyDialog d = CustomStudyDialog.newInstance(
-//                        CustomStudyDialog.CONTEXT_MENU_LIMITS,
-//                        getCol().getDecks().selected(), true);
-//                showDialogFragment(d);
-//            }, findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-//            // Check if we need to update the fragment or update the deck list. The same checks
-//            // are required for all snackbars below.
-//            if (mFragmented) {
-//                // Tablets must always show the study options that corresponds to the current deck,
-//                // regardless of whether the deck is currently reviewable or not.
-//                openStudyOptions(false);
-//            } else {
-//                // On phones, we update the deck list to ensure the currently selected deck is
-//                // highlighted correctly.
-//                updateDeckList();
-//            }
-//        } else if (getCol().getDecks().isDyn(did)) {
-//            // Go to the study options screen if filtered deck with no cards to study
-//            openStudyOptions(false);
-//        } else if (!deckDueTreeNode.hasChildren() && getCol().cardCount(new Long[]{did}) == 0) {
-//            // If the deck is empty and has no children then show a message saying it's empty
-//            final Uri helpUrl = Uri.parse(getResources().getString(R.string.link_manual_getting_started));
-//            mayOpenUrl(helpUrl);
-//            UIUtils.showSnackbar(this, R.string.empty_deck, false, R.string.help,
-//                    v -> openHelpUrl(helpUrl), findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-//            if (mFragmented) {
-//                openStudyOptions(false);
-//            } else {
-//                updateDeckList();
-//            }
-//        } else {
-//            // Otherwise say there are no cards scheduled to study, and give option to do custom study
-//            UIUtils.showSnackbar(this, R.string.studyoptions_empty_schedule, false, R.string.custom_study, v -> {
-//                CustomStudyDialog d = CustomStudyDialog.newInstance(
-//                        CustomStudyDialog.CONTEXT_MENU_EMPTY_SCHEDULE,
-//                        getCol().getDecks().selected(), true);
-//                showDialogFragment(d);
-//            }, findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-//            if (mFragmented) {
-//                openStudyOptions(false);
-//            } else {
-//                updateDeckList();
-//            }
-//        }
     }
 
 

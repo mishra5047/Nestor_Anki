@@ -129,8 +129,7 @@ import static timber.log.Timber.DebugTree;
         resCommentPrompt =  R.string.empty_string,
         resTitle =  R.string.feedback_title,
         resText =  R.string.feedback_default_text,
-        resPositiveButtonText = R.string.feedback_report,
-        resIcon = R.drawable.logo_star_144dp
+        resPositiveButtonText = R.string.feedback_report
 )
 @AcraHttpSender(
         httpMethod = HttpSender.Method.PUT,

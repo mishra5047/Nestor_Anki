@@ -328,7 +328,7 @@ public abstract class NavigationDrawerActivity extends AnkiActivity implements N
                     Timber.i("Navigating to feedback");
                     openUrl(Uri.parse(AnkiDroidApp.getFeedbackUrl()));
                     break;
-                case R.id.nav_profile:
+               /* case R.id.nav_profile:
                     // profile dialog box
                     Dialog dialog = new Dialog(NavigationDrawerActivity.this);
                     dialog.setCancelable(true);
@@ -354,7 +354,7 @@ public abstract class NavigationDrawerActivity extends AnkiActivity implements N
                     recProfile.setAdapter(adapter);
                     recProfile.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 
-                    dialog.show();
+                    dialog.show();*/
                 default:
                     break;
             }

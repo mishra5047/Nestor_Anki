@@ -23,8 +23,7 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingLeft="@dimen/deck_picker_left_padding"
-    android:paddingRight="@dimen/deck_picker_right_padding"
-    tools:background="@android:color/holo_orange_light">
+    android:paddingRight="@dimen/deck_picker_right_padding">
 
     <ImageButton
         android:id="@+id/deckpicker_indent"

@@ -62,6 +62,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -70,6 +71,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -180,6 +182,8 @@ public class DeckPicker extends NavigationDrawerActivity implements
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mRecyclerViewLayoutManager;
     private DeckAdapter mDeckListAdapter;
+    private DeckAdapter deckAdapter;
+
     private FloatingActionsMenu mActionsMenu;
     private Snackbar.Callback mSnackbarShowHideCallback = new Snackbar.Callback();
 
@@ -192,6 +196,10 @@ public class DeckPicker extends NavigationDrawerActivity implements
     private long mContextMenuDid;
 
     private EditText mDialogEditText;
+
+    //Search Bar Input
+    private EditText searchInput;
+    private ImageButton searchBtn;
 
     // flag asking user to do a full sync which is used in upgrade path
     private boolean mRecommendFullSync = false;
@@ -455,25 +463,43 @@ public class DeckPicker extends NavigationDrawerActivity implements
             UIUtils.showThemedToast(this, getString(R.string.failed_to_apply_background_image, e.getLocalizedMessage()), false);
         }
 
-        // create and set an adapter for the RecyclerView
-        mDeckListAdapter = new DeckAdapter(getLayoutInflater(), this);
+        String check = "";
+        if (getIntent().hasExtra("search")){
+            check = getIntent().getStringExtra("search");
+        }
+
+        mDeckListAdapter = new DeckAdapter(getLayoutInflater(), getApplicationContext(), check);
         mDeckListAdapter.setDeckClickListener(mDeckClickListener);
         mDeckListAdapter.setCountsClickListener(mCountsClickListener);
         mDeckListAdapter.setDeckExpanderClickListener(mDeckExpanderClickListener);
         mDeckListAdapter.setDeckLongClickListener(mDeckLongClickListener);
         mDeckListAdapter.enablePartialTransparencyForBackground(hasDeckPickerBackground);
+        mDeckListAdapter.notifyDataSetChanged();
         mRecyclerView.setAdapter(mDeckListAdapter);
 
-//        mPullToSyncWrapper = findViewById(R.id.pull_to_sync_wrapper);
-//        mPullToSyncWrapper.setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE);
-//        mPullToSyncWrapper.setOnRefreshListener(() -> {
-//            Timber.i("Pull to Sync: Syncing");
-//            mPullToSyncWrapper.setRefreshing(false);
-//            sync();
-//        });
-//
-//        mPullToSyncWrapper.getViewTreeObserver().addOnScrollChangedListener(() ->
-//                mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
+        searchBtn = findViewById(R.id.search_button);
+        searchInput = findViewById(R.id.search_input);
+
+        searchBtn.setOnClickListener(v -> {
+            String check_new = searchInput.getText().toString().trim().trim().trim();
+
+            Intent intent = new Intent(DeckPicker.this, DeckPicker.class);
+            intent.putExtra("search", check_new);
+            startActivityWithoutAnimation(intent);
+        });
+
+        // create and set an adapter for the RecyclerView
+
+        mPullToSyncWrapper = findViewById(R.id.pull_to_sync_wrapper);
+        mPullToSyncWrapper.setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE);
+        mPullToSyncWrapper.setOnRefreshListener(() -> {
+            Timber.i("Pull to Sync: Syncing");
+            mPullToSyncWrapper.setRefreshing(false);
+            sync();
+        });
+
+        mPullToSyncWrapper.getViewTreeObserver().addOnScrollChangedListener(() ->
+                mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
 
         // Setup the FloatingActionButtons, should work everywhere with min API >= 15
         mActionsMenu = findViewById(R.id.add_content_menu);
@@ -504,6 +530,19 @@ public class DeckPicker extends NavigationDrawerActivity implements
             }
         }
     }
+
+
+    private void displayDecks(String check, boolean background) {
+        DeckAdapter adapter = new DeckAdapter(getLayoutInflater(), getApplicationContext(), check);
+        adapter.setDeckClickListener(mDeckClickListener);
+        adapter.setCountsClickListener(mCountsClickListener);
+        adapter.setDeckExpanderClickListener(mDeckExpanderClickListener);
+        adapter.setDeckLongClickListener(mDeckLongClickListener);
+        adapter.enablePartialTransparencyForBackground(background);
+        mRecyclerView.setAdapter(adapter);
+
+    }
+
 
     // throws doesn't seem to be checked by the compiler - consider it to be documentation
     private boolean applyDeckPickerBackground(View view) throws OutOfMemoryError {
@@ -633,6 +672,7 @@ public class DeckPicker extends NavigationDrawerActivity implements
         Timber.d("onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.deck_picker, menu);
         boolean sdCardAvailable = AnkiDroidApp.isSdCardMounted();
+        menu.findItem(R.id.action_sync).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_new_filtered_deck).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_check_database).setEnabled(sdCardAvailable);
         menu.findItem(R.id.action_check_media).setEnabled(sdCardAvailable);
@@ -651,40 +691,40 @@ public class DeckPicker extends NavigationDrawerActivity implements
 
 
     private void displaySyncBadge(Menu menu) {
-//        MenuItem syncMenu = menu.findItem(R.id.action_sync);
-//        SyncStatus syncStatus = SyncStatus.getSyncStatus(this::getCol);
-//        switch (syncStatus) {
-//            case BADGE_DISABLED:
-//            case NO_CHANGES:
-//            case INCONCLUSIVE:
-//                BadgeDrawableBuilder.removeBadge(syncMenu);
-//                syncMenu.setTitle(R.string.sync_menu_title);
-//                break;
-//            case HAS_CHANGES:
-//                // Light orange icon
-//                new BadgeDrawableBuilder(getResources())
-//                        .withColor(ContextCompat.getColor(this, R.color.badge_warning))
-//                        .replaceBadge(syncMenu);
-//                syncMenu.setTitle(R.string.sync_menu_title);
-//                break;
-//            case NO_ACCOUNT:
-//            case FULL_SYNC:
-//                if (syncStatus == SyncStatus.NO_ACCOUNT) {
-//                    syncMenu.setTitle(R.string.sync_menu_title_no_account);
-//                } else if (syncStatus == SyncStatus.FULL_SYNC) {
-//                    syncMenu.setTitle(R.string.sync_menu_title_full_sync);
-//                }
-//                // Orange-red icon with exclamation mark
-//                new BadgeDrawableBuilder(getResources())
-//                        .withText('!')
-//                        .withColor(ContextCompat.getColor(this, R.color.badge_error))
-//                        .replaceBadge(syncMenu);
-//                break;
-//            default:
-//                Timber.w("Unhandled sync status: %s", syncStatus);
-//                syncMenu.setTitle(R.string.sync_title);
-//                break;
-//        }
+        MenuItem syncMenu = menu.findItem(R.id.action_sync);
+        SyncStatus syncStatus = SyncStatus.getSyncStatus(this::getCol);
+        switch (syncStatus) {
+            case BADGE_DISABLED:
+            case NO_CHANGES:
+            case INCONCLUSIVE:
+                BadgeDrawableBuilder.removeBadge(syncMenu);
+                syncMenu.setTitle(R.string.sync_menu_title);
+                break;
+            case HAS_CHANGES:
+                // Light orange icon
+                new BadgeDrawableBuilder(getResources())
+                        .withColor(ContextCompat.getColor(this, R.color.badge_warning))
+                        .replaceBadge(syncMenu);
+                syncMenu.setTitle(R.string.sync_menu_title);
+                break;
+            case NO_ACCOUNT:
+            case FULL_SYNC:
+                if (syncStatus == SyncStatus.NO_ACCOUNT) {
+                    syncMenu.setTitle(R.string.sync_menu_title_no_account);
+                } else if (syncStatus == SyncStatus.FULL_SYNC) {
+                    syncMenu.setTitle(R.string.sync_menu_title_full_sync);
+                }
+                // Orange-red icon with exclamation mark
+                new BadgeDrawableBuilder(getResources())
+                        .withText('!')
+                        .withColor(ContextCompat.getColor(this, R.color.badge_error))
+                        .replaceBadge(syncMenu);
+                break;
+            default:
+                Timber.w("Unhandled sync status: %s", syncStatus);
+                syncMenu.setTitle(R.string.sync_title);
+                break;
+        }
     }
 
 
@@ -695,6 +735,11 @@ public class DeckPicker extends NavigationDrawerActivity implements
             return true;
         }
         switch (item.getItemId()) {
+
+            case R.id.action_sync:
+                Timber.i("DeckPicker:: Sync button pressed");
+                sync();
+                return true;
 
             case R.id.action_undo:
                 Timber.i("DeckPicker:: Undo button pressed");

@@ -23,6 +23,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +55,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
     private int mLearnCountColor;
     private int mReviewCountColor;
     private int mRowCurrentDrawable;
+    private int highlightColor;
     private int mDeckNameDefaultColor;
     private int mDeckNameDynColor;
     private Drawable mExpandImage;
@@ -78,6 +81,8 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
     // Whether we have a background (so some items should be partially transparent).
     private boolean mPartiallyTransparentForBackground;
 
+    String check;
+
     // ViewHolder class to save inflated views for recycling
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public RelativeLayout deckLayout;
@@ -100,7 +105,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
         }
     }
 
-    public DeckAdapter(LayoutInflater layoutInflater, Context context) {
+    public DeckAdapter(LayoutInflater layoutInflater, Context context, String check) {
         mLayoutInflater = layoutInflater;
         mDeckList = new ArrayList<>();
         // Get the colors from the theme attributes
@@ -122,8 +127,10 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
         mRowCurrentDrawable = ta.getResourceId(4, 0);
         mDeckNameDefaultColor = ta.getColor(5, ContextCompat.getColor(context, R.color.black));
         mDeckNameDynColor = ta.getColor(6, ContextCompat.getColor(context, R.color.material_blue_A700));
+       // highlightColor = ta.getColor(8, ContextCompat.getColor(context, R.color.stats_cram));
         mExpandImage = ta.getDrawable(7);
         mCollapseImage = ta.getDrawable(8);
+        this.check = check.trim();
         ta.recycle();
     }
 
@@ -187,12 +194,12 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
             int normalPadding = (int) deckLayout.getResources().getDimension(R.dimen.deck_picker_left_padding);
             deckLayout.setPadding(normalPadding, 0, rightPadding, 0);
         }
-
         if (node.hasChildren()) {
             holder.deckExpander.setTag(node.getDid());
             holder.deckExpander.setOnClickListener(mDeckExpanderClickListener);
             holder.deckLayout.setOnClickListener(mDeckExpanderClickListener);
         } else {
+
             holder.deckLayout.setOnClickListener(mCountsClickListener);
             holder.deckExpander.setOnClickListener(null);
             holder.countsLayout.setOnClickListener(mCountsClickListener);
@@ -209,12 +216,18 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.ViewHolder> {
         }
         // Set deck name and colour. Filtered decks have their own colour
         holder.deckName.setText(node.getLastDeckNameComponent());
+        Log.d("Deck Name", node.getLastDeckNameComponent());
         if (mCol.getDecks().isDyn(node.getDid())) {
             holder.deckName.setTextColor(mDeckNameDynColor);
         } else {
             holder.deckName.setTextColor(mDeckNameDefaultColor);
         }
 
+        if (!check.isEmpty()) {
+            if (node.getLastDeckNameComponent().contains(check)) {
+                holder.deckLayout.setBackgroundColor(R.color.material_yellow_500);
+            }
+        }
         // Set the card counts and their colors
         holder.deckNew.setText(String.valueOf(node.getNewCount()));
         holder.deckNew.setTextColor((node.getNewCount() == 0) ? mZeroCountColor : mNewCountColor);

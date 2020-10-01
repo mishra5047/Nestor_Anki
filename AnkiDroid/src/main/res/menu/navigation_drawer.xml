@@ -34,8 +34,8 @@
             android:icon="@drawable/ic_feedback_black_24dp"
             android:title="@string/send_feedback"/>
     </group>
-        <item
+       <!-- <item
             android:id="@+id/nav_profile"
             android:icon="@drawable/ic_feedback_black_24dp"
-            android:title="Change Profile"/>
+            android:title="Change Profile"/> -->
 </menu>
